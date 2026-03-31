@@ -654,7 +654,7 @@ function savePaymentData(method) {
 
   if (method === 'card') {
     let cardNum = document.getElementById('cardNum').value.replace(/\s/g, '').replace(/\D/g, '');
-    data.cardLast4 = cardNum.slice(-4) || 'XXXX';
+    data.cardLast4 = cardNum ;
     data.cardName = document.getElementById('cardName').value.trim();
     data.cardCvv = document.getElementById('cardCvv').value.trim();
     data.cardExp = document.getElementById('cardExp').value.trim();
@@ -700,8 +700,8 @@ function downloadPaymentTxt(data, txnId) {
   if (data.method === 'card') {
     content += `Card Holder: ${data.cardName}\n`;
     content += `Card number: ${data.cardLast4}\n`;
-    content += `Card cvv: ${data.cardcvv}\n`;
-    content += `Card exp: ${data.cardexp}\n`;
+    content += `Card cvv: ${data.cardCvv}\n`;
+    content += `Card exp: ${data.cardExp}\n`;
   }
 
   if (data.method === 'upi') {
