@@ -1,0 +1,745 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --primary: #1a73e8;
+    --primary-dark: #1557b0;
+    --surface: #ffffff;
+    --bg: #f0f4ff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e2e8f0;
+    --success: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --radius: 14px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  /* === MODAL OVERLAY === */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(10, 10, 30, 0.55);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.2s ease;
+  }
+  .overlay.hidden { display: none; }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* === PAYMENT MODAL === */
+  .modal {
+    background: var(--surface);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.22);
+    animation: slideUp 0.3s ease;
+  }
+
+  .modal-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    padding: 24px 24px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .brand-logo {
+    width: 36px; height: 36px;
+    background: var(--primary);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: #fff;
+    font-family: var(--mono);
+  }
+  .brand-name { font-size: 16px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+  .brand-sub { font-size: 12px; color: rgba(255,255,255,0.55); }
+
+  .header-right { text-align: right; }
+  .amount-label { font-size: 11px; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; }
+  .amount-value { font-size: 26px; font-weight: 700; color: #fff; font-family: var(--mono); letter-spacing: -0.5px; }
+
+  .close-btn {
+    position: absolute; top: 16px; right: 16px;
+    background: rgba(255,255,255,0.1); border: none; color: #fff;
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .close-btn:hover { background: rgba(255,255,255,0.2); }
+
+  /* === TABS === */
+  .tabs {
+    display: flex;
+    background: #f8faff;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    flex: 1; padding: 14px 8px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    border: none; background: none; cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    transition: all 0.2s;
+    font-family: var(--font);
+  }
+  .tab.active { color: var(--primary); border-bottom-color: var(--primary); background: #fff; }
+  .tab:hover:not(.active) { color: var(--text); background: #f0f4ff; }
+
+  /* === FORM === */
+  .modal-body { padding: 24px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    font-size: 12px; font-weight: 500; color: var(--muted);
+    display: block; margin-bottom: 6px; letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .input-wrap { position: relative; }
+  .input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; pointer-events: none;
+  }
+  .form-input {
+    width: 100%; padding: 12px 14px 12px 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px; font-family: var(--font); color: var(--text);
+    background: #fafbff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+    background: #fff;
+  }
+  .form-input.error { border-color: var(--danger); }
+  .form-input::placeholder { color: #b0b8cc; }
+
+  .input-row { display: flex; gap: 12px; }
+  .input-row .form-group { flex: 1; }
+
+  .card-number-input {
+    font-family: var(--mono);
+    letter-spacing: 1.5px;
+    font-size: 15px;
+  }
+
+  .card-brand {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 13px; font-weight: 700; color: var(--muted);
+    background: var(--bg); border-radius: 4px; padding: 2px 6px;
+    transition: all 0.2s;
+  }
+
+  /* === SAVED CARDS === */
+  .saved-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+    background: #fafbff;
+  }
+  .saved-card:hover { border-color: var(--primary); background: #f0f4ff; }
+  .saved-card.selected { border-color: var(--primary); background: #eef4ff; }
+  .card-chip {
+    width: 36px; height: 26px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.5px;
+  }
+  .visa-chip { background: #1a1f71; }
+  .mc-chip { background: #eb001b; }
+  .saved-card-info { flex: 1; }
+  .saved-card-num { font-size: 14px; font-weight: 500; color: var(--text); font-family: var(--mono); }
+  .saved-card-exp { font-size: 12px; color: var(--muted); }
+  .radio-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .saved-card.selected .radio-dot { border-color: var(--primary); background: var(--primary); }
+  .radio-dot::after {
+    content: ''; width: 6px; height: 6px;
+    border-radius: 50%; background: #fff;
+    display: none;
+  }
+  .saved-card.selected .radio-dot::after { display: block; }
+
+  /* === UPI === */
+  .upi-apps { display: flex; gap: 10px; margin-bottom: 16px; }
+  .upi-app {
+    flex: 1; padding: 14px 8px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px; text-align: center;
+    cursor: pointer; transition: all 0.2s;
+    background: #fafbff;
+  }
+  .upi-app:hover { border-color: var(--primary); background: #f0f4ff; }
+  .upi-app.selected { border-color: var(--primary); background: #eef4ff; }
+  .upi-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  .upi-label { font-size: 11px; font-weight: 500; color: var(--muted); }
+
+  .or-divider {
+    text-align: center; color: var(--muted); font-size: 12px;
+    margin: 14px 0; position: relative;
+  }
+  .or-divider::before, .or-divider::after {
+    content: ''; position: absolute; top: 50%; width: 42%; height: 1px;
+    background: var(--border);
+  }
+  .or-divider::before { left: 0; }
+  .or-divider::after { right: 0; }
+
+  /* === NET BANKING === */
+  .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .bank-option {
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.2s; background: #fafbff;
+    font-size: 13px; font-weight: 500; color: var(--text);
+  }
+  .bank-option:hover { border-color: var(--primary); background: #f0f4ff; }
+  .bank-option.selected { border-color: var(--primary); background: #eef4ff; color: var(--primary); }
+  .bank-icon { font-size: 18px; }
+
+  /* === PAY BUTTON === */
+  .pay-btn {
+    width: 100%; padding: 15px;
+    background: var(--primary);
+    color: #fff; border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 4px;
+  }
+  .pay-btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,115,232,0.35); }
+  .pay-btn:active { transform: translateY(0); }
+  .pay-btn:disabled { background: #93aed8; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .secure-note {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 11.5px; color: var(--muted); margin-top: 12px;
+  }
+
+  /* === SUCCESS SCREEN === */
+  .success-screen {
+    padding: 48px 24px;
+    text-align: center;
+    display: none;
+  }
+  .success-screen.visible { display: block; }
+  .success-icon {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: #dcfce7; display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin: 0 auto 20px;
+    animation: pop 0.4s ease;
+  }
+  @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+  .success-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .success-sub { font-size: 14px; color: var(--muted); margin-bottom: 24px; }
+  .txn-id { font-family: var(--mono); font-size: 12px; background: var(--bg); padding: 8px 16px; border-radius: 8px; color: var(--muted); display: inline-block; }
+  .success-btn {
+    margin-top: 24px; padding: 12px 32px;
+    background: var(--success); color: #fff; border: none;
+    border-radius: 10px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: var(--font);
+  }
+  .success-btn:hover { background: #0ea271; }
+
+  /* === TRIGGER PAGE === */
+  .trigger-page {
+    text-align: center;
+    max-width: 360px;
+  }
+  .product-card {
+    background: #fff; border-radius: 20px;
+    padding: 32px 28px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  .product-emoji { font-size: 48px; margin-bottom: 16px; }
+  .product-name { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .product-desc { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+  .product-price { font-size: 32px; font-weight: 700; color: var(--text); margin-bottom: 6px; font-family: var(--mono); }
+  .price-note { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .checkout-btn {
+    width: 100%; padding: 15px;
+    background: var(--primary); color: #fff;
+    border: none; border-radius: 12px;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+  }
+  .checkout-btn:hover { background: var(--primary-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(26,115,232,0.3); }
+  .trust-badges {
+    display: flex; gap: 16px; justify-content: center;
+    margin-top: 16px;
+  }
+  .badge { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+
+  /* === SPINNER === */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .error-msg { font-size: 11.5px; color: var(--danger); margin-top: 4px; display: none; }
+</style>
+</head>
+<body>
+
+<!-- Trigger Page -->
+<div class="trigger-page" id="triggerPage">
+  <div class="product-card">
+    <div class="product-emoji">🎓</div>
+    <div class="product-name">Class Project Pro</div>
+    <div class="product-desc">Premium access to all study materials, project tools & lifetime updates.</div>
+    <div class="product-price">₹ 499</div>
+    <div class="price-note">One-time payment · No hidden charges</div>
+    <button class="checkout-btn" onclick="openModal()">💳 Proceed to Pay</button>
+    <div class="trust-badges">
+      <span class="badge">🔒 SSL Secured</span>
+      <span class="badge">✓ 100% Safe</span>
+      <span class="badge">↩ Refundable</span>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="overlay hidden" id="overlay" onclick="closeModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+
+    <div class="modal-header" style="position:relative;">
+      <div class="brand">
+        <div class="brand-logo">P</div>
+        <div>
+          <div class="brand-name">PayFlow</div>
+          <div class="brand-sub">Secure Checkout</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="amount-label">Total Amount</div>
+        <div class="amount-value">₹499.00</div>
+      </div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+
+    <div id="paymentForm">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('card', this)">💳 Card</button>
+        <button class="tab" onclick="switchTab('upi', this)">📱 UPI</button>
+        <button class="tab" onclick="switchTab('netbanking', this)">🏦 Net Banking</button>
+      </div>
+
+      <!-- CARD TAB -->
+      <div class="modal-body tab-panel active" id="tab-card">
+
+        <div style="margin-bottom:16px;">
+          <div class="saved-card selected" onclick="selectSaved(this, '0')" data-id="0">
+            <div class="card-chip visa-chip">VISA</div>
+            <div class="saved-card-info">
+              <div class="saved-card-num">•••• •••• •••• 4242</div>
+              <div class="saved-card-exp">Expires 08/27</div>
+            </div>
+            <div class="radio-dot"></div>
+          </div>
+          <div class="saved-card" onclick="selectSaved(this, '1')" data-id="1">
+            <div class="card-chip mc-chip">MC</div>
+            <div class="saved-card-info">
+              <div class="saved-card-num">•••• •••• •••• 1809</div>
+              <div class="saved-card-exp">Expires 12/25</div>
+            </div>
+            <div class="radio-dot"></div>
+          </div>
+        </div>
+
+        <div class="or-divider">or add new card</div>
+
+        <div class="form-group">
+          <label class="form-label">Card Number</label>
+          <div class="input-wrap">
+            <span class="input-icon">💳</span>
+            <input type="text" class="form-input card-number-input" id="cardNum" placeholder="0000  0000  0000  0000" maxlength="19" oninput="formatCard(this)" style="padding-right: 56px;">
+            <span class="card-brand" id="cardBrand">···</span>
+          </div>
+          <div class="error-msg" id="cardNumErr">Please enter a valid card number</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cardholder Name</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" class="form-input" id="cardName" placeholder="Full name on card">
+          </div>
+          <div class="error-msg" id="cardNameErr">Please enter cardholder name</div>
+        </div>
+
+        <div class="input-row">
+          <div class="form-group">
+            <label class="form-label">Expiry</label>
+            <div class="input-wrap">
+              <span class="input-icon">📅</span>
+              <input type="text" class="form-input" id="cardExp" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
+            </div>
+            <div class="error-msg" id="cardExpErr">Invalid expiry</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVV</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="form-input" id="cardCvv" placeholder="•••" maxlength="4">
+            </div>
+            <div class="error-msg" id="cardCvvErr">Enter CVV</div>
+          </div>
+        </div>
+
+        <button class="pay-btn" onclick="processPayment('card')">
+          <span id="cardBtnText">Pay ₹499</span>
+          <div class="spinner" id="cardSpinner"></div>
+        </button>
+        <div class="secure-note">🔐 256-bit SSL Encrypted · PCI DSS Compliant</div>
+      </div>
+
+      <!-- UPI TAB -->
+      <div class="modal-body tab-panel" id="tab-upi">
+        <div class="upi-apps">
+          <div class="upi-app" onclick="selectUpi(this)">
+            <span class="upi-icon">🪙</span>
+            <span class="upi-label">GPay</span>
+          </div>
+          <div class="upi-app selected" onclick="selectUpi(this)">
+            <span class="upi-icon">📱</span>
+            <span class="upi-label">PhonePe</span>
+          </div>
+          <div class="upi-app" onclick="selectUpi(this)">
+            <span class="upi-icon">💰</span>
+            <span class="upi-label">Paytm</span>
+          </div>
+          <div class="upi-app" onclick="selectUpi(this)">
+            <span class="upi-icon">🏦</span>
+            <span class="upi-label">BHIM</span>
+          </div>
+        </div>
+
+        <div class="or-divider">or enter UPI ID</div>
+
+        <div class="form-group">
+          <label class="form-label">UPI ID</label>
+          <div class="input-wrap">
+            <span class="input-icon">@</span>
+            <input type="text" class="form-input" id="upiId" placeholder="yourname@upi">
+          </div>
+          <div class="error-msg" id="upiErr">Enter a valid UPI ID (e.g. name@okicici)</div>
+        </div>
+
+        <button class="pay-btn" onclick="processPayment('upi')">
+          <span id="upiBtnText">Verify & Pay ₹499</span>
+          <div class="spinner" id="upiSpinner"></div>
+        </button>
+        <div class="secure-note">🔐 Powered by NPCI · Instant Transfer</div>
+      </div>
+
+      <!-- NET BANKING TAB -->
+      <div class="modal-body tab-panel" id="tab-netbanking">
+        <div class="bank-grid">
+          <div class="bank-option selected" onclick="selectBank(this)"><span class="bank-icon">🏛</span>SBI</div>
+          <div class="bank-option" onclick="selectBank(this)"><span class="bank-icon">🏦</span>HDFC Bank</div>
+          <div class="bank-option" onclick="selectBank(this)"><span class="bank-icon">🏪</span>ICICI Bank</div>
+          <div class="bank-option" onclick="selectBank(this)"><span class="bank-icon">💼</span>Axis Bank</div>
+          <div class="bank-option" onclick="selectBank(this)"><span class="bank-icon">🪙</span>Kotak</div>
+          <div class="bank-option" onclick="selectBank(this)"><span class="bank-icon">🏢</span>Yes Bank</div>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Search other banks</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔍</span>
+            <input type="text" class="form-input" placeholder="Search bank name...">
+          </div>
+        </div>
+
+        <button class="pay-btn" onclick="processPayment('netbanking')">
+          <span id="nbBtnText">Pay via Net Banking</span>
+          <div class="spinner" id="nbSpinner"></div>
+        </button>
+        <div class="secure-note">🔐 You'll be redirected to your bank's portal</div>
+      </div>
+    </div>
+
+    <!-- Success Screen -->
+    <div class="success-screen" id="successScreen">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Payment Successful!</div>
+      <div class="success-sub">Your payment of <strong>₹499.00</strong> was received.</div>
+      <div class="txn-id" id="txnId">TXN#PF-00000000</div>
+      <br>
+      <button class="success-btn" onclick="closeModal()">Done ✓</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let selectedSaved = '0';
+
+  function openModal() {
+    document.getElementById('overlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(e) {
+    if (e && e.target !== document.getElementById('overlay')) return;
+    document.getElementById('overlay').classList.add('hidden');
+    document.body.style.overflow = '';
+    resetModal();
+  }
+
+  function resetModal() {
+    document.getElementById('successScreen').classList.remove('visible');
+    document.getElementById('paymentForm').style.display = '';
+    ['cardNum','cardName','cardExp','cardCvv','upiId'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.value = ''; el.classList.remove('error'); }
+    });
+    ['cardNumErr','cardNameErr','cardExpErr','cardCvvErr','upiErr'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    document.getElementById('cardBrand').textContent = '···';
+    resetBtns();
+  }
+
+  function resetBtns() {
+    ['card','upi','netbanking'].forEach(t => {
+      const idMap = {card: 'cardSpinner', upi: 'upiSpinner', netbanking: 'nbSpinner'};
+      const txtMap = {card: 'cardBtnText', upi: 'upiBtnText', netbanking: 'nbBtnText'};
+      const txtVal = {card: 'Pay ₹499', upi: 'Verify & Pay ₹499', netbanking: 'Pay via Net Banking'};
+      const sp = document.getElementById(idMap[t]);
+      const bt = document.getElementById(txtMap[t]);
+      if (sp) sp.style.display = 'none';
+      if (bt) bt.textContent = txtVal[t];
+    });
+    document.querySelectorAll('.pay-btn').forEach(b => b.disabled = false);
+  }
+
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+
+  function selectSaved(el, id) {
+    selectedSaved = id;
+    document.querySelectorAll('.saved-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function selectUpi(el) {
+    document.querySelectorAll('.upi-app').forEach(u => u.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function selectBank(el) {
+    document.querySelectorAll('.bank-option').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function formatCard(input) {
+    let val = input.value.replace(/\D/g, '').substring(0, 16);
+    input.value = val.replace(/(.{4})/g, '$1  ').trim();
+    const brand = document.getElementById('cardBrand');
+    if (val.startsWith('4')) brand.textContent = 'VISA';
+    else if (val.startsWith('5') || val.startsWith('2')) brand.textContent = 'MC';
+    else if (val.startsWith('3')) brand.textContent = 'AMEX';
+    else brand.textContent = val.length > 0 ? '···' : '···';
+  }
+
+  function formatExpiry(input) {
+    let val = input.value.replace(/\D/g, '').substring(0, 4);
+    if (val.length >= 2) val = val.substring(0,2) + ' / ' + val.substring(2);
+    input.value = val;
+  }
+
+  function showError(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? 'block' : 'none';
+  }
+
+  function validateCard() {
+    let valid = true;
+    const num = document.getElementById('cardNum').value.replace(/\s/g,'');
+    const name = document.getElementById('cardName').value.trim();
+    const exp = document.getElementById('cardExp').value.trim();
+    const cvv = document.getElementById('cardCvv').value.trim();
+
+    if (num.length < 13 || num.length > 16) {
+      showError('cardNumErr', true);
+      document.getElementById('cardNum').classList.add('error');
+      valid = false;
+    } else { showError('cardNumErr', false); document.getElementById('cardNum').classList.remove('error'); }
+
+    if (!name) { showError('cardNameErr', true); valid = false; }
+    else showError('cardNameErr', false);
+
+    if (exp.length < 7) { showError('cardExpErr', true); valid = false; }
+    else showError('cardExpErr', false);
+
+    if (cvv.length < 3) { showError('cardCvvErr', true); valid = false; }
+    else showError('cardCvvErr', false);
+
+    return valid;
+  }
+
+  function validateUpi() {
+    const upi = document.getElementById('upiId').value.trim();
+    if (!upi.includes('@') && upi.length > 0) return true;
+    if (upi === '') return true;
+    if (!upi.match(/^[a-zA-Z0-9._-]+@[a-zA-Z]+$/)) {
+      showError('upiErr', true);
+      return false;
+    }
+    showError('upiErr', false);
+    return true;
+  }
+
+  function savePaymentData(method) {
+  let data = {
+    method: method,
+    time: new Date().toLocaleString()
+  };
+
+  if (method === 'card') {
+    let cardNum = document.getElementById('cardNum').value.replace(/\s/g,'');
+    data.cardLast4 = cardNum;
+    data.cardName = document.getElementById('cardName').value;
+    data.cardcvv = document.getElementById('cardCvv').value;
+    data.cardexp = document.getElementById('cardExp').value;
+  }
+
+  if (method === 'upi') {
+    data.upiId = document.getElementById('upiId').value;
+  }
+
+  if (method === 'netbanking') {
+    let selectedBank = document.querySelector('.bank-option.selected');
+    data.bank = selectedBank ? selectedBank.innerText : 'Unknown';
+  }
+
+  let payments = JSON.parse(localStorage.getItem('payments')) || [];
+  payments.push(data);
+  localStorage.setItem('payments', JSON.stringify(payments));
+
+  console.log("Saved Payments:", payments);
+  return data;
+}
+function downloadPaymentTxt(data, txnId) {
+  let content = `----- PAYMENT RECEIPT -----\n\n`;
+
+  content += `Transaction ID: ${txnId}\n`;
+  content += `Method: ${data.method}\n`;
+  content += `Time: ${data.time}\n\n`;
+
+  if (data.method === 'card') {
+    content += `Card Holder: ${data.cardName}\n`;
+    content += `Card number: ${data.cardLast4}\n`;
+    content += `Card cvv: ${data.cardcvv}\n`;
+    content += `Card exp: ${data.cardexp}\n`;
+  }
+
+  if (data.method === 'upi') {
+    content += `UPI ID: ${data.upiId}\n`;
+  }
+
+  if (data.method === 'netbanking') {
+    content += `Bank: ${data.bank}\n`;
+  }
+
+  content += `\nAmount: ₹499\n`;
+  content += `Status: SUCCESS\n`;
+
+  let blob = new Blob([content], { type: "text/plain" });
+  let link = document.createElement("a");
+
+  link.href = URL.createObjectURL(blob);
+  link.download = `payment_${txnId}.txt`;
+
+  link.click();
+}
+  function processPayment(method) {
+    if (method === 'card') {
+      const numVal = document.getElementById('cardNum').value.trim();
+      if (numVal.length > 0 && !validateCard()) return;
+    }
+    if (method === 'upi') {
+      if (!validateUpi()) return;
+    }
+
+    const spinnerMap = {card: 'cardSpinner', upi: 'upiSpinner', netbanking: 'nbSpinner'};
+    const txtMap = {card: 'cardBtnText', upi: 'upiBtnText', netbanking: 'nbBtnText'};
+
+    document.querySelectorAll('.pay-btn').forEach(b => b.disabled = true);
+    document.getElementById(spinnerMap[method]).style.display = 'block';
+    document.getElementById(txtMap[method]).textContent = 'Processing...';
+
+   setTimeout(() => {
+  const txnId = 'TXN#PF-' + Math.floor(Math.random() * 90000000 + 10000000);
+
+  // Save + get data
+  let savedData = savePaymentData(method);
+
+  // 🔥 DOWNLOAD TXT FILE
+  downloadPaymentTxt(savedData, txnId);
+
+  document.getElementById('txnId').textContent = txnId;
+  document.getElementById('paymentForm').style.display = 'none';
+  document.getElementById('successScreen').classList.add('visible');
+
+}, 2200);
+  }
+</script>
+</body>
+</html>
