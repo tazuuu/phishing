@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 });
 
 // Log payment data
-app.post('/log-payment', (req, res) => {
+app.post('/logs', (req, res) => {
   const data = req.body;
   const timestamp = new Date().toISOString();
 
