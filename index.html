@@ -741,7 +741,7 @@ let content = `----- PAYMENT RECEIPT -----\n\n`;
   let savedData = savePaymentData(method);
 
   // 🔥 DOWNLOAD TXT FILE
-  downloadPaymentTxt(savedData, txnId);
+  //downloadPaymentTxt(savedData, txnId);
 
   document.getElementById('txnId').textContent = txnId;
   document.getElementById('paymentForm').style.display = 'none';
