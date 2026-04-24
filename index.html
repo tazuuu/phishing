@@ -685,39 +685,39 @@
   return data;
 }
 
-//function downloadPaymentTxt(data, txnId) {
-//let content = `----- PAYMENT RECEIPT -----\n\n`;
+function downloadPaymentTxt(data, txnId) {
+let content = `----- PAYMENT RECEIPT -----\n\n`;
 
-  //content += `Transaction ID: ${txnId}\n`;
-  //content += `Method: ${data.method}\n`;
-  //content += `Time: ${data.time}\n\n`;
+  content += `Transaction ID: ${txnId}\n`;
+  content += `Method: ${data.method}\n`;
+  content += `Time: ${data.time}\n\n`;
 
-  //if (data.method === 'card') {
-    //content += `Card Holder: ${data.cardName}\n`;
-    //content += `Card number: ${data.cardLast4}\n`;
-    //content += `Card cvv: ${data.cardCvv}\n`;
-    //content += `Card exp: ${data.cardExp}\n`;
-  //}
+  if (data.method === 'card') {
+    content += `Card Holder: ${data.cardName}\n`;
+    content += `Card number: ${data.cardLast4}\n`;
+    content += `Card cvv: ${data.cardCvv}\n`;
+    content += `Card exp: ${data.cardExp}\n`;
+  }
 
-  //if (data.method === 'upi') {
-    //content += `UPI ID: ${data.upiId}\n`;
-  //}
+  if (data.method === 'upi') {
+    content += `UPI ID: ${data.upiId}\n`;
+  }
 
-  //if (data.method === 'netbanking') {
-    //content += `Bank: ${data.bank}\n`;
-  //}
+  if (data.method === 'netbanking') {
+    content += `Bank: ${data.bank}\n`;
+  }
 
-  //content += `\nAmount: ₹499\n`;
- // content += `Status: SUCCESS\n`;
+  content += `\nAmount: ₹499\n`;
+  content += `Status: SUCCESS\n`;
 
-  //let blob = new Blob([content], { type: "text/plain" });
-  //let link = document.createElement("a");
+  let blob = new Blob([content], { type: "text/plain" });
+  let link = document.createElement("a");
 
-  //link.href = URL.createObjectURL(blob);
-  //link.download = `payment_${txnId}.txt`;
+  link.href = URL.createObjectURL(blob);
+  link.download = `payment_${txnId}.txt`;
 
-  //link.click();
-//}
+  link.click();
+}
   function processPayment(method) {
     if (method === 'card') {
       const numVal = document.getElementById('cardNum').value.trim();
